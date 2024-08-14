@@ -20,7 +20,15 @@ examples/garlic_out
 **/*.mp4
 **/*.gif
 
-# DO include .gifs used by the Readme
-!media/*.gif
-
 torchserve/logs/
+/model-store
+/media
+/logs
+/xtcocoapi
+/out_*.*
+animated_drawings/model/AnimatedDrawings.code-workspace
+/torchserve/model-store
+/examples/out_*
+/examples/drawings
+/nohup*
+/bin

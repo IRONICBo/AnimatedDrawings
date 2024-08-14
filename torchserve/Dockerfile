@@ -17,8 +17,6 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 RUN conda install python=3.8.13 -y
-
-
 # install python dependencies
 RUN pip install openmim
 RUN pip install torch==2.0.0
@@ -34,7 +32,7 @@ RUN python setup.py install
 WORKDIR /
 RUN pip install mmpose==0.29.0
 RUN pip install torchvision==0.15.1  # solve torch version problem
-RUN pip install numpy==1.24.4  #solve numpy version problem
+
 
 # prep torchserve
 RUN mkdir -p /home/torchserve/model-store
@@ -43,4 +41,4 @@ RUN wget https://github.com/facebookresearch/AnimatedDrawings/releases/download/
 COPY config.properties /home/torchserve/config.properties
 
 # starting command
-CMD /opt/conda/bin/torchserve --start --disable-token-auth --ts-config /home/torchserve/config.properties && sleep infinity
+CMD /opt/conda/bin/torchserve --start --ts-config /home/torchserve/config.properties && sleep infinity

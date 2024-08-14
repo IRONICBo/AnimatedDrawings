@@ -29,10 +29,14 @@ class Scene(Transform, TimeManager):
 
             ad = AnimatedDrawing(*each)
             self.add_child(ad)
+            self.ad = ad
 
             # add bvh to the scene if we're going to visualize it
             if cfg.add_ad_retarget_bvh:
                 self.add_child(ad.retargeter.bvh)
+
+    def _cleanup_after_run_loop(self):
+        self.ad._cleanup_after_run_loop()
 
     def progress_time(self, delta_t: float) -> None:
         """

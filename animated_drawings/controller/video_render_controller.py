@@ -108,6 +108,7 @@ class VideoRenderController(Controller):
 
     def _cleanup_after_run_loop(self) -> None:
         logging.info(f'Rendered {self.frames_rendered} frames in {time.time()-self.run_loop_start_time} seconds.')
+        self.scene._cleanup_after_run_loop()
         self.view.cleanup()
 
         _time = time.time()

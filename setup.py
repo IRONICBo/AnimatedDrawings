@@ -21,9 +21,9 @@ setup(
         'glfw==2.5.5',
         'PyOpenGL==3.1.6',
         'PyYAML==6.0.1',
-        'requests==2.31.0',
+        'requests==2.28.2',
         'torchserve==0.7.0',
-        'tqdm==4.66.3',
+        'tqdm==4.65.2',
         'Flask==2.3.2'
     ],
     packages=find_packages(),

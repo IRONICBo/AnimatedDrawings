@@ -10,6 +10,7 @@ import time
 from typing import Dict, List, Tuple, Optional, TypedDict, DefaultDict
 from collections import defaultdict
 from pathlib import Path
+import json
 
 import cv2
 import numpy as np
@@ -188,8 +189,6 @@ class AnimatedDrawingRig(Transform):
                 self._set_global_orientations(c, bvh_orientations)
 
     def _draw(self, **kwargs):
-        if not kwargs['viewer_cfg'].draw_ad_rig:
-            return
 
         if not self._is_opengl_initialized:
             self._initialize_opengl_resources()
@@ -263,8 +262,17 @@ class AnimatedDrawing(Transform, TimeManager):
         self._is_opengl_initialized: bool = False
         self._vertex_buffer_dirty_bit: bool = True
 
+        self.anim_frames_bone = []
+        self.anim_frames_vertex = []
+        self.render_orders = []
+        self.rig_names = self.rig.root_joint.get_chain_joint_names()[1:]
+        self.rig_init_pts = self.rig.get_joints_2D_positions().reshape(-1).tolist()
+        self.save_mesh()
         # pose the animated drawing using the first frame of the bvh
         self.update()
+    def _cleanup_after_run_loop(self):
+        self.save_animation()
+        pass 
 
     def _modify_retargeting_cfg_for_character(self):
         """
@@ -382,8 +390,12 @@ class AnimatedDrawing(Transform, TimeManager):
 
         # using new joint positions, calculate new mesh vertex xy positions
         control_points: npt.NDArray[np.float32] = self.rig.get_joints_2D_positions() - root_position[:2]
+        self.anim_frames_bone.append(control_points)
+        
         self.vertices[:, :2] = self.arap.solve(control_points) + root_position[:2]
-
+        
+        self.anim_frames_vertex.append(self.vertices[:,:2].reshape(-1).tolist())
+        
         # use the z position of the rig's root joint for all mesh vertices
         self.vertices[:, 2] = self.rig.root_joint.get_world_position()[2]
 
@@ -400,13 +412,15 @@ class AnimatedDrawing(Transform, TimeManager):
             bodypart_depth: np.float32 = np.mean([joint_depths[joint_name] for joint_name in bodypart_group_dict['bvh_depth_drivers']])
             _bodypart_render_order.append((idx, bodypart_depth))
         _bodypart_render_order.sort(key=lambda x: float(x[1]))
-
+        render_order=[]
         # Add vertices belonging to joints in each segment group in the order they will be rendered
         indices: List[npt.NDArray[np.int32]] = []
         for idx, dist in _bodypart_render_order:
             intra_bodypart_render_order = 1 if dist > 0 else -1  # if depth driver is behind plane, render bodyparts in reverse order
             for joint_name in self.retarget_cfg.char_bodypart_groups[idx]['char_joints'][::intra_bodypart_render_order]:
                 indices.append(self.joint_to_tri_v_idx.get(joint_name, np.array([], dtype=np.int32)))
+                render_order.append(self.rig_names.index(joint_name))
+        self.render_orders.append(render_order)
         self.indices = np.hstack(indices)
 
     def _initialize_joint_to_triangles_dict(self) -> None:  # noqa: C901
@@ -529,7 +543,6 @@ class AnimatedDrawing(Transform, TimeManager):
         txtr[np.where(self.mask == 0)][:, 3] = 0  # make pixels outside mask transparent
 
         return txtr
-
     def _generate_mesh(self) -> None:
         try:
             contours: List[npt.NDArray[np.float64]] = measure.find_contours(self.mask, 128)
@@ -574,8 +587,53 @@ class AnimatedDrawing(Transform, TimeManager):
                 triangles.append(_triangle)
 
         vertices /= self.img_dim  # scale vertices so they lie between 0-1
-
+        
         self.mesh = {'vertices': vertices, 'triangles': triangles}
+
+    def save_animation(self):
+        anim_frames_bone = np.array([triangle.reshape(-1).tolist() for triangle in self.anim_frames_bone  ]).reshape(-1).tolist()
+        anim_frames_vertex = np.array(self.anim_frames_vertex)
+        render_orders =self.render_orders
+        frame_count= len(anim_frames_vertex)
+        anim_frames_vertex = anim_frames_vertex.reshape(-1).tolist()
+        anim_frames_vertex = [round(num, 4) for num in anim_frames_vertex]
+        with open('out_anim.json', 'w') as f:
+            json.dump({
+                #"names": self.rig_names, 
+                #"bones": self.rig_init_pts, 
+                #"anim_frames_bone":anim_frames_bone,
+                "frame_count": frame_count,
+                "anim_frames_vertex":anim_frames_vertex,
+                "render_orders": render_orders
+                }, f)
+
+    def save_mesh(self):
+        # save self.mesh to json 
+        uvs = self.mesh['vertices'][:, [0, 1]]
+        # initialize texture coordinates
+        data_to_save = {
+            "names": self.rig_names ,
+            'vertices': self.mesh['vertices'].reshape(-1).tolist(),
+            'uv': uvs.reshape(-1).tolist(),
+            'triangles': [self.joint_to_tri_v_idx[joint].reshape(-1).tolist() for joint in self.rig_names ],
+        }
+
+        # Save to JSON file
+        with open('out_mesh.json', 'w') as f:
+            json.dump(data_to_save, f)
+
+
+        # Assume vertices and faces are numpy arrays
+        vertices = self.mesh['vertices']
+        faces = self.mesh['triangles']
+
+        with open('out_mesh.obj', 'w') as file:
+            for v in vertices:
+                file.write('v {} {} {}\n'.format(v[0], v[1], 0))
+            for uv in uvs:
+                file.write('vt {} {}\n'.format(uv[0], uv[1]))
+            for f in faces:
+                file.write('f {} {} {}\n'.format(f[0] + 1, f[1] + 1, f[2] + 1))  # OBJ files are 1-indexed
 
     def _initialize_vertices(self) -> None:
         """
