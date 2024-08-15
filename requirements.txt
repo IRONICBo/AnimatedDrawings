@@ -1,0 +1,9 @@
+# server dependencies
+grpcio
+grpcio-tools
+loguru
+uuid
+etcd3
+minio
+pyyaml
+qiniu
