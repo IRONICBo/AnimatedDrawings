@@ -21,6 +21,16 @@ def image_to_animation(img_fn: str, char_anno_dir: str, motion_cfg_fn: str, reta
     # create the animation
     annotations_to_animation(char_anno_dir, motion_cfg_fn, retarget_cfg_fn)
 
+def default_image_to_animation(img_fn: str, char_anno_dir: str):
+    """
+    Given the image located at img_fn, create annotation files needed for animation.
+    Then create animation from those animations and default motion cfg and retarget cfg.
+    """
+    # create the annotations
+    image_to_annotations(img_fn, char_anno_dir)
+
+    # create the animation
+    annotations_to_animation(char_anno_dir, resource_filename(__name__, 'config/motion/dab.yaml'), resource_filename(__name__, 'config/retarget/fair1_ppf.yaml'))
 
 if __name__ == '__main__':
     log_dir = Path('./logs')

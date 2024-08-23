@@ -32,3 +32,5 @@ animated_drawings/model/AnimatedDrawings.code-workspace
 /examples/drawings
 /nohup*
 /bin
+
+# ignore inter files

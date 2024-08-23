@@ -272,7 +272,7 @@ class AnimatedDrawing(Transform, TimeManager):
         self.update()
     def _cleanup_after_run_loop(self):
         self.save_animation()
-        pass 
+        pass
 
     def _modify_retargeting_cfg_for_character(self):
         """
@@ -391,11 +391,11 @@ class AnimatedDrawing(Transform, TimeManager):
         # using new joint positions, calculate new mesh vertex xy positions
         control_points: npt.NDArray[np.float32] = self.rig.get_joints_2D_positions() - root_position[:2]
         self.anim_frames_bone.append(control_points)
-        
+
         self.vertices[:, :2] = self.arap.solve(control_points) + root_position[:2]
-        
+
         self.anim_frames_vertex.append(self.vertices[:,:2].reshape(-1).tolist())
-        
+
         # use the z position of the rig's root joint for all mesh vertices
         self.vertices[:, 2] = self.rig.root_joint.get_world_position()[2]
 
@@ -587,7 +587,7 @@ class AnimatedDrawing(Transform, TimeManager):
                 triangles.append(_triangle)
 
         vertices /= self.img_dim  # scale vertices so they lie between 0-1
-        
+
         self.mesh = {'vertices': vertices, 'triangles': triangles}
 
     def save_animation(self):
@@ -597,10 +597,12 @@ class AnimatedDrawing(Transform, TimeManager):
         frame_count= len(anim_frames_vertex)
         anim_frames_vertex = anim_frames_vertex.reshape(-1).tolist()
         anim_frames_vertex = [round(num, 4) for num in anim_frames_vertex]
-        with open('out_anim.json', 'w') as f:
+
+        # TODO: move this file to a more appropriate location
+        with open('/tmp/out_anim.json', 'w') as f:
             json.dump({
-                #"names": self.rig_names, 
-                #"bones": self.rig_init_pts, 
+                #"names": self.rig_names,
+                #"bones": self.rig_init_pts,
                 #"anim_frames_bone":anim_frames_bone,
                 "frame_count": frame_count,
                 "anim_frames_vertex":anim_frames_vertex,
@@ -608,7 +610,7 @@ class AnimatedDrawing(Transform, TimeManager):
                 }, f)
 
     def save_mesh(self):
-        # save self.mesh to json 
+        # save self.mesh to json
         uvs = self.mesh['vertices'][:, [0, 1]]
         # initialize texture coordinates
         data_to_save = {
@@ -619,7 +621,8 @@ class AnimatedDrawing(Transform, TimeManager):
         }
 
         # Save to JSON file
-        with open('out_mesh.json', 'w') as f:
+        # TODO: move this file to a more appropriate location
+        with open('/tmp/out_mesh.json', 'w') as f:
             json.dump(data_to_save, f)
 
 
@@ -627,7 +630,8 @@ class AnimatedDrawing(Transform, TimeManager):
         vertices = self.mesh['vertices']
         faces = self.mesh['triangles']
 
-        with open('out_mesh.obj', 'w') as file:
+        # TODO: move this file to a more appropriate location
+        with open('/tmp/out_mesh.obj', 'w') as file:
             for v in vertices:
                 file.write('v {} {} {}\n'.format(v[0], v[1], 0))
             for uv in uvs:

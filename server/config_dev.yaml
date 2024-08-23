@@ -1,0 +1,16 @@
+# Rpc register key
+Name: animateservice.rpc
+ContainerName: 127.0.0.1
+Host: 0.0.0.0
+Port: 50051
+
+Minio:
+  Endpoint: 127.0.0.1:9000
+  AccessKeyID: minioadmin
+  SecretAccessKey: real-dream-ai
+  UseSSL: false
+  BucketName: real-dream-ai
+
+ETCD:
+  Host: 127.0.0.1
+  Port: 2379

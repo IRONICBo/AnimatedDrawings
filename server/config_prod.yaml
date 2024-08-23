@@ -1,0 +1,16 @@
+# Rpc register key
+Name: animateservice.rpc
+ContainerName: animateservice
+Host: 0.0.0.0
+Port: 50051
+
+Minio:
+  Endpoint: *
+  AccessKeyID: *
+  SecretAccessKey: *
+  UseSSL: false
+  BucketName: *
+
+ETCD:
+  Host: etcd
+  Port: 2379

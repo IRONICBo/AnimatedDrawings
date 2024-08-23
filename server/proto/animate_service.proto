@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "./animateservice";
+
+package animateservice;
+
+service AnimateService {
+    rpc ProcessImage (AnimateRequest) returns (AnimateResponse);
+}
+
+message AnimateRequest {
+    string image_url = 1;
+}
+
+message AnimateResponse {
+    string material_url = 1;
+}
